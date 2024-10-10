@@ -1,5 +1,7 @@
 % Trigger test for EEG-FMRI
 % Author: Hadi Zaatiti <hadi.zaatiti@nyu.edu>
+% Authors: Hadi Zaatiti <hadi.zaatiti@nyu.edu>, Haidee Paterson
+% <haidee.paterson@nyu.edu>
 
 %fingertapping- this one for haidee only stop and tap 
 % big font
@@ -14,11 +16,26 @@ global isTerminationKeyPressed;
 global resReport;
 global totalTime;
 global datapixx;
+global datapixx; 
 global PSYCHTOOLBOX;
 global VPIXX_USE;
 
 VPIXX_USE = false;
+VPIXX_USE = true;
 PSYCHTOOLBOX = false;
+
+
+
+%%
+
+% To make a marker S2 appear on the EEG data we must activate pin number 3
+% on the 25-pin D-Sub as in Table 1 below
+% To activate the pin number 3, we need to activate the Digital Out 4 on
+% the Datapixx
+% To activate the Digital Out 4, we need to send this combination 00000100 -> 4
+
+% Using Datapixx('SetDoutValues', 4);
+
 
 % Pinout of the trigger socket (digital port) on USB2 Adapter on the
 % EEG-FMRI trigger box
@@ -105,6 +122,7 @@ loadParameters();
 %--------------------------------------------------------------------------------------------------------------------------------------%
 initSubjectInfo();
 
+
 % %  Hide Mouse Cursor
 
 if PSYCHTOOLBOX
@@ -115,11 +133,17 @@ if PSYCHTOOLBOX
 %   Initialize screen
 %--------------------------------------------------------------------------------------------------------------------------------------%
 initScreen(); %change transparency of screen from here
+    %   Initialize screen
+    %--------------------------------------------------------------------------------------------------------------------------------------%
+    initScreen(); %change transparency of screen from here
 
 
 %   Convert values from visual degrees to pixels
 %--------------------------------------------------------------------------------------------------------------------------------------%
 visDegrees2Pix();
+    %   Convert values from visual degrees to pixels
+    %--------------------------------------------------------------------------------------------------------------------------------------%
+    visDegrees2Pix();
 end
 %   Initialize Datapixx
 %-------------------------------------------------------------------------- ------------------------------------------------------------%
@@ -135,14 +159,31 @@ if VPIXX_USE
     end
 end
 
+        if ~parameters.isDemoMode
+            % datapixx init
+            datapixx = 1;               
+            AssertOpenGL;   % We use PTB-3;
+            isReady =  Datapixx('Open');
+            Datapixx('StopAllSchedules');
+            Datapixx('RegWrRd');    % Synchronize DATAPixx registers to local register cache
+        end
+
+
 % Show how many TTL output bits are in the Datapixx
 nBits = Datapixx('GetDoutNumBits');
 fprintf('\nDATAPixx has %d TTL output bits\n\n', nBits);
+    % Show how many TTL output bits are in the Datapixx
+    nBits = Datapixx('GetDoutNumBits');
+    fprintf('\nDATAPixx has %d TTL output bits\n\n', nBits);
 
 % Bring 1 output high
 HitKeyToContinue('\nHit any key to bring digital output bit 0 high:');
 Datapixx('SetDoutValues', 1);
 Datapixx('RegWrRd');
+    % Bring 1 output high
+    %HitKeyToContinue('\nHit any key to bring digital output bit 0 high:');
+    Datapixx('SetDoutValues', 1);
+    Datapixx('RegWrRd');
 
 % According to BrainProducts datasheet:
 % +-----------------------------------------------------+
@@ -160,27 +201,176 @@ Datapixx('RegWrRd');
 % | 17                        | D06 (S 64) | 8                    |                  |
 
 
+
 % In MRI we have a 25-pin D-Sub cable so we care about this column
 % Trigger S2 marker by activating the 3rd pin of the 25-pin D-sub cable
 % The 3rd pin corresponds to digital output 4 on the vpixx system
 % 4 in binary is 0100
+    % In MRI we have a 25-pin D-Sub cable so we care about this column
+    % Trigger S2 marker by activating the 3rd pin of the 25-pin D-sub cable
+    % The 3rd pin corresponds to digital output 4 on the vpixx system
+    % 4 in binary is 0100
+    
 
 % Should trigger S2 marker on EEG
 HitKeyToContinue('\nHit any key to bring the EEG S2 marker on:');
 Datapixx('SetDoutValues', (2^nBits) - 1);
 Datapixx('RegWrRd');
+    
+    % Should trigger S2 marker on EEG
+    %HitKeyToContinue('\nHit any key to bring the EEG S2 marker on:');
+
+    
+    % Set total duration (in seconds) to run the loop
+    totalDuration = 500; % e.g., 30 seconds
+    % Set pause duration (in seconds) between each instruction
+    pauseDuration = 2; % e.g., 2 seconds
+
+    % Start the timer
+    tic;
+    
+    Datapixx('SetDoutValues', 0);
+    Datapixx('RegWrRd');
+    
+    
+    
+    %Activate Current State
+    
+    
+    
+    % We can only control bits 0 to 7
+    
+    % Binary numbers with a single 1 over 8 bits and their decimal equivalents:
+% 00000001 -> 1
+% 00000010 -> 2
+% 00000100 -> 4
+% 00001000 -> 8
+% 00010000 -> 16
+% 00100000 -> 32
+% 01000000 -> 64
+% 10000000 -> 128
+
+
+% Datapixx 
+
+    % Current State = 0
+    while toc < totalDuration
+        
+        % Should trigger the S2 marker on EEG
+        %Datapixx('SetDoutValues', 4);
+        %Datapixx('RegWrRd');
+        
+%         
+        Datapixx('SetDoutValues', 2);
+        Datapixx('RegWrRd');
+        disp('all triggers on');
+        pause(2);
+
+        Datapixx('SetDoutValues', 0);
+        Datapixx('RegWrRd');
+        disp('all triggers off');
+        % Wait for the specified pause duration
+        pause(pauseDuration);
+        
+    end
+    
+    % Current State = 0
+    while toc < totalDuration
+        
+        % Should trigger the S2 marker on EEG
+        %Datapixx('SetDoutValues', 4);
+        %Datapixx('RegWrRd');
+        
+%         
+        Datapixx('SetDoutValues', 4);
+        Datapixx('RegWrRd');
+        disp('all triggers on');
+        pause(2);
+
+        Datapixx('SetDoutValues', 0);
+        Datapixx('RegWrRd');
+        disp('all triggers off');
+        % Wait for the specified pause duration
+        pause(pauseDuration);
+        
+    end
+    
+    
+    % Current State = 0
+    while toc < totalDuration
+        
+        % Should trigger the S2 marker on EEG
+        %Datapixx('SetDoutValues', 4);
+        %Datapixx('RegWrRd');
+        
+%         
+        Datapixx('SetDoutValues', 4);
+        Datapixx('RegWrRd');
+        disp('all triggers on');
+        pause(2);
+
+        Datapixx('SetDoutValues', 0);
+        Datapixx('RegWrRd');
+        disp('all triggers off');
+        % Wait for the specified pause duration
+        pause(pauseDuration);
+        
+    end
+    
+    
+    
+    % Current State = 1
+    while toc < totalDuration
+        
+        % Should trigger the S2 marker on EEG
+        %Datapixx('SetDoutValues', 4);
+        %Datapixx('RegWrRd');
+        
+%         
+        Datapixx('SetDoutValues', 2);
+        Datapixx('RegWrRd');
+        disp('all triggers on');
+        pause(2);
+
+        Datapixx('SetDoutValues', 0);
+        Datapixx('RegWrRd');
+        disp('all triggers off');
+        % Wait for the specified pause duration
+        pause(pauseDuration);
+    end
+    
+    
+    %Let us trigger one bit by one bit and send markers:
+    
+    
+    
+    
+    
+
+    % When the loop finishes
+    disp('Finished repeating instructions.');
 
 
 % Bring all the outputs high
 HitKeyToContinue('\nHit any key to bring all the digital outputs high:');
 Datapixx('SetDoutValues', (2^nBits) - 1);
 Datapixx('RegWrRd');
+    
+    % Bring all the outputs high
+    %HitKeyToContinue('\nHit any key to bring all the digital outputs high:');
+    Datapixx('SetDoutValues', (2^nBits) - 1);
+    Datapixx('RegWrRd');
 
 % Bring all the outputs low
 HitKeyToContinue('\nHit any key to bring all the digital outputs low:');
 Datapixx('SetDoutValues', 0);
 Datapixx('RegWrRd');
 
+    % Bring all the outputs low
+    %HitKeyToContinue('\nHit any key to bring all the digital outputs low:');
+    Datapixx('SetDoutValues', 0);
+    Datapixx('RegWrRd');
+    
 
 if VPIXX_USE
     if ~parameters.isDemoMode
@@ -189,4 +379,10 @@ if VPIXX_USE
         Datapixx('StopAllSchedules');
         Datapixx('Close');
     end
+        if ~parameters.isDemoMode
+            % datapixx shutdown
+            Datapixx('RegWrRd');
+            Datapixx('StopAllSchedules');
+            Datapixx('Close');
+        end
 end
