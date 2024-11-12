@@ -47,7 +47,8 @@ extensions = [
     "sphinx_gallery.load_style",
     "sphinx.ext.mathjax",
     "sphinx_togglebutton",
-    "sphinx_panels"
+    "sphinx_panels",
+    "myst-parser"
 ]
 
 exclude_patterns = ['5-pipeline/notebooks/fieldtrip/template_*.ipynb']
