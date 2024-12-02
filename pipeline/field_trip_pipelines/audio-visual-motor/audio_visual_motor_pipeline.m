@@ -176,7 +176,8 @@ save TRIALS_STIM_REJ TRIALS_STIM_REJ
 
 
 %% Averaging
-
+load TRIALS_STIM_REJ.mat TRIALS_STIM_REJ
+trigger_channels = [225, 226, 227];
 AVG_TRIALS = cell( length(trigger_channels),1);
 
 for tr = 1:length(AVG_TRIALS)
@@ -189,6 +190,7 @@ end
 
 %% Get KIT Sensors
 
+conFile = fullfile(DATA_FOLDER_PATH, conFiles(1).name);
 kit_layout = create_kit_layout(conFile);
 
 figure('Position', [100, 100, 1000, 800]); % Adjust the width and height (1000 and 800) as needed
