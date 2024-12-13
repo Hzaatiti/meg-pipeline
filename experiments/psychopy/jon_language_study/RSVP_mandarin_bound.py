@@ -2,23 +2,27 @@ import os, sys
 import pandas as pd
 from psychopy import core, visual, event, parallel, data, monitors, gui
 
+SCREEN_NUMBER = 2
+#Try 1 or 2 as screen_number
+#SCREEN_NUMBER = 1
+
 #os.chdir('/Users/jsprouse/Desktop')
-trialList = data.importConditions('test.materials.csv')
+trialList = data.importConditions('mandarin_bound.csv')
 
 #mon = monitors.Monitor('BenQ24', width=53, distance=100)
 #port = parallel.ParallelPort(address=0xD010)
 clock = core.Clock()
 
 backgroundColor = 'black'
-stimuliFont = 'Calibri'
+stimuliFont = 'Microsoft YaHei'
 stimuliColor = 'yellow'
 stimuliUnits = 'deg'
-stimuliSize = 2
-wordOn = 18
-wordOff = 12
-lastWordOn = 60
+stimuliSize = 1.5
+wordOn = 15
+wordOff = 15
+lastWordOn = 15
 
-boxHeight = stimuliSize + .5
+boxHeight = stimuliSize + 1.5
 boxWidth = 11
 
 longestWordCount = 0
@@ -49,7 +53,7 @@ taskQuestionUnits = stimuliUnits
 taskQuestionOff = wordOff
 
 instructionColor = 'yellow'
-instructionSize = 1
+instructionSize = .8
 instructionUnits = stimuliUnits
 instructionOff = wordOff
 
@@ -109,7 +113,7 @@ if myDlg.OK:
 else:
     print('user cancelled')
 
-win = visual.Window(size=[1920, 1080], fullscr=True, color=backgroundColor, monitor='testMonitor')
+win = visual.Window(screen =1, size=[1919, 1079], fullscr=False, color=backgroundColor, monitor='testMonitor')
 
 stim = visual.TextStim(win, text='In this experiment, you will read sentences one word at a time.\n\nAfter each sentence is finished, you will be asked a Yes or No question about that sentence.\n\nAll you have to do is read the sentences normally, and then answer the question\n\nPress the YES key to see some examples.', font=stimuliFont, units=breakUnits, height=breakSize, color=instructionColor)
 stim.setPos((0, 0))
@@ -178,6 +182,7 @@ for trialIndex in range(startItem - 1, totalTrials):
 
     words = trialList[trialIndex]['sentence'].split()
     numWords = len(words)
+    print(trialList[trialIndex]['trigger'])
     triggerList = range(int(trialList[trialIndex]['trigger']), int(trialList[trialIndex]['trigger']) + numWords)
 
     box = visual.Rect(win, width=boxWidth, height=boxHeight, units=fixationUnits)

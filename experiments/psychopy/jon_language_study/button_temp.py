@@ -2,23 +2,76 @@ import os, sys
 import pandas as pd
 from psychopy import core, visual, event, parallel, data, monitors, gui
 
+from pypixxlib import _libdpx as dp
+from utilities import *
+
+from experiments.psychopy.general.trigger_test_psychopy_digital_out_combination import trigger_channels_dictionary
+# Setup the connection with the Vpixx systems and disable Pixel Mode
+
+dp.DPxOpen()
+dp.DPxDisableDoutPixelMode()
+dp.DPxWriteRegCache()
+
+# Define the RGB code for each channel on the KIT machine and their name
+trigger = [[4, 0, 0], [16, 0, 0], [64, 0, 0], [0, 1, 0], [0, 4, 0], [0, 16, 0], [0, 64, 0], [0, 0, 1]]
+channel_names  = ['224', '225', '226', '227', '228', '229', '230', '231']
+black = [0, 0, 0]
+
+def RGB2Trigger(color):
+    # helper function determines expected trigger from a given RGB 255 colour value
+    # operates by converting individual colours into binary strings and stitching them together
+    # and interpreting the result as an integer
+
+    # return triggerVal
+    return int((color[2] << 16) + (color[1] << 8) + color[0])  # dhk
+
+# If you would like to combine the use of multiple channels at once for a trigger
+# Define this dictionary
+trigger_channels_dictionary = {
+    224: 4,
+    225: 16,
+    226: 64,
+    227: 256,
+    228: 1024,
+    229: 4096,
+    230: 16384,
+    231: 65536
+}
+
+# Responsebox
+
+# When you need to use it add thisline
+responses = [] # Add this at the beginning of your script
+#Copy/Paste these two lines everytime the participant should input a button
+#response = getbutton() #listen to a button
+#responses.append(response) #everytime we get a response we add it to the table
+
+# Save the responses in a variable responses = [] then responses.append(response) then save it to your .csv
+
+SCREEN_NUMBER = 2
+#Try 1 or 2 as screen_number
+#SCREEN_NUMBER = 1
+
 #os.chdir('/Users/jsprouse/Desktop')
-trialList = data.importConditions('test.materials.csv')
+trialList = data.importConditions('mandarin_bound.csv')
+#trialList = data.importConditions('egyptian_backward_debugging.csv')
 
 #mon = monitors.Monitor('BenQ24', width=53, distance=100)
 #port = parallel.ParallelPort(address=0xD010)
 clock = core.Clock()
 
 backgroundColor = 'black'
-stimuliFont = 'Calibri'
+instructionsFont = 'Arial'
+#stimuliFont = 'Microsoft Sans Serif Regular' ######## change 1 (was Calibri)
+stimuliFont = 'Microsoft YaHei'
 stimuliColor = 'yellow'
 stimuliUnits = 'deg'
 stimuliSize = 2
-wordOn = 18
+wordOn = 12 ##### change 2 (was 18)
 wordOff = 12
 lastWordOn = 60
 
-boxHeight = stimuliSize + .5
+boxHeight = stimuliSize + 1.5
 boxWidth = 11
 
 longestWordCount = 0
@@ -61,10 +114,10 @@ breakUnits = instructionUnits
 breakOff = wordOff
 
 quitKey = 'escape'
-responseYes = 'j'
-responseNo = 'f'
-correctTrigger = 251
-incorrectTrigger = 250
+#responseYes = 'j'
+#responseNo = 'f'
+#correctTrigger = 251
+#incorrectTrigger = 250
 startItem = 1
 
 totalTrials = len(trialList)
@@ -109,16 +162,17 @@ if myDlg.OK:
 else:
     print('user cancelled')
 
-win = visual.Window(size=[1920, 1080], fullscr=True, color=backgroundColor, monitor='testMonitor')
+win = visual.Window(screen =1, size=[1919, 1079], fullscr=False, color=backgroundColor, monitor='testMonitor')  # Set the border color to black)
 
-stim = visual.TextStim(win, text='In this experiment, you will read sentences one word at a time.\n\nAfter each sentence is finished, you will be asked a Yes or No question about that sentence.\n\nAll you have to do is read the sentences normally, and then answer the question\n\nPress the YES key to see some examples.', font=stimuliFont, units=breakUnits, height=breakSize, color=instructionColor)
+stim = visual.TextStim(win, text='In this experiment, you will read sentences one word at a time.\n\nAfter each sentence is finished, you will be asked a Yes or No question about that sentence.\n\nAll you have to do is read the sentences normally, and then answer the question\n\nPress the YES key to see some examples.', font=instructionsFont, units=breakUnits, height=breakSize, color=instructionColor)
 stim.setPos((0, 0))
 stim.draw()
 win.flip()
 
-pauseResponse = event.waitKeys(keyList=[responseYes, quitKey])
+response = getbutton()  # listen to a button
+responses.append(response)  # everytime we get a response we add it to the table
 
-if pauseResponse[-1] == quitKey:
+if responses[-1] == quitKey:
     participantName = participantInfo[0].replace(" ", "")
     filename = 'results.' + participantName + '.csv'
     results.to_csv(filename)
@@ -129,6 +183,8 @@ for frameN in range(instructionOff - 1):
     win.flip()
 win.flip()
 
+
+# this is a loop on each trial
 for trialIndex in range(startItem - 1, totalTrials):
     pauseResponse = []
     responses = []
@@ -140,17 +196,19 @@ for trialIndex in range(startItem - 1, totalTrials):
         remainingTrials = (totalTrials - totalBreakCount - practiceCount) - completedTrials
 
         if currentBreakCount == 1:
-            stim = visual.TextStim(win, text='Congratulations! You answered %i of the %i practice questions correctly.\n\nYou are now ready to do the actual experiment.\n\nThere are %i sentences to read.\n\nPlease sit still, stop blinking and press the YES key when you are ready for the first sentence.' % (recentCorrectResponses, trialsSinceLastBreak, remainingTrials), font=stimuliFont, units=breakUnits, height=breakSize, color=breakColor)
+            stim = visual.TextStim(win, text='Congratulations! You answered %i of the %i practice questions correctly.\n\nYou are now ready to do the actual experiment.\n\nThere are %i sentences to read.\n\nPlease sit still, stop blinking and press the YES key when you are ready for the first sentence.' % (recentCorrectResponses, trialsSinceLastBreak, remainingTrials), font=instructionsFont, units=breakUnits, height=breakSize, color=breakColor)
             totalCorrectResponses = 0
         else:
-            stim = visual.TextStim(win, text='Please feel free to take a short break now if you would like.\n\nYou answered %i out of %i questions correctly since the last break.\n\nYou have completed %i sentences, and have %i to go.\n\nWhen you are ready for the next sentence, please sit still, stop blinking, and press the YES key.' % (recentCorrectResponses, trialsSinceLastBreak, completedTrials, remainingTrials), font=stimuliFont, units=breakUnits, height=breakSize, color=breakColor)
+            stim = visual.TextStim(win, text='Please feel free to take a short break now if you would like.\n\nYou answered %i out of %i questions correctly since the last break.\n\nYou have completed %i sentences, and have %i to go.\n\nWhen you are ready for the next sentence, please sit still, stop blinking, and press the YES key.' % (recentCorrectResponses, trialsSinceLastBreak, completedTrials, remainingTrials), font=instructionsFont, units=breakUnits, height=breakSize, color=breakColor)
         stim.setPos((0, 0))
         stim.draw()
         win.flip()
 
-        pauseResponse = event.waitKeys(keyList=[responseYes, quitKey])
+        #pauseResponse = event.waitKeys(keyList=[responseYes, quitKey])
+        response = getbutton()  # listen to a button
+        responses.append(response)  # everytime we get a response we add it to the table
 
-        if pauseResponse[-1] == quitKey:
+        if responses[-1] == quitKey:
             participantName = participantInfo[0].replace(" ", "")
             filename = 'results.' + participantName + '.csv'
             results.to_csv(filename)
@@ -198,6 +256,7 @@ for trialIndex in range(startItem - 1, totalTrials):
     win.flip()
 
     for wordIndex in range(numWords):
+        print(repr(words[wordIndex]))
         if event.getKeys(quitKey):
             participantName = participantInfo[0].replace(" ", "")
             filename = 'results.' + participantName + '.csv'
@@ -205,7 +264,8 @@ for trialIndex in range(startItem - 1, totalTrials):
             win.close()
             core.quit()
 
-        stim = visual.TextStim(win, text=words[wordIndex], font=stimuliFont, units=stimuliUnits, height=stimuliSize, color=stimuliColor)
+        stim = visual.TextStim(win, text=words[wordIndex], languageStyle='Arabic', ### change 3 (was not specified)
+                               font=stimuliFont, units=stimuliUnits, height=stimuliSize, color=stimuliColor)
         stim.setPos((0, 0))
 
         if wordIndex == max(range(numWords)):
@@ -221,7 +281,41 @@ for trialIndex in range(startItem - 1, totalTrials):
         else:
             for frameN in range(wordOn):
                 stim.draw()
-                win.flip()
+                win.flip() # First word appeared after this flip, this flip will occur wordOn number of times, so you only want to trigger at the first win.flip of this loop
+                            # add code for trigger under condition (wordIndex==0 and frameN==0)
+                if wordIndex == 0 and frameN == 0:
+                    # Calculate the combined trigger value using the original method
+                    combined_trigger_value = (
+                            trialList[trialIndex]['trigger224'] * trigger_channels_dictionary[224] +
+                            trialList[trialIndex]['trigger225'] * trigger_channels_dictionary[225] +
+                            trialList[trialIndex]['trigger226'] * trigger_channels_dictionary[226] +
+                            trialList[trialIndex]['trigger227'] * trigger_channels_dictionary[227] +
+                            trialList[trialIndex]['trigger228'] * trigger_channels_dictionary[228] +
+                            trialList[trialIndex]['trigger229'] * trigger_channels_dictionary[229] +
+                            trialList[trialIndex]['trigger230'] * trigger_channels_dictionary[230] +
+                            trialList[trialIndex]['trigger231'] * trigger_channels_dictionary[231]
+                    )
+
+                    # Debugging log: Print the calculated combined value
+                    print(f"Trial {trialIndex}, Trigger: Combined Value = {combined_trigger_value}")
+
+                    # Send the combined trigger to the hardware
+                    dp.DPxSetDoutValue(combined_trigger_value, 0xFFFFFF)
+                    dp.DPxUpdateRegCache()
+
+                    # Briefly wait to register the trigger
+                    core.wait(0.1)
+
+                    # Reset the trigger to avoid lingering activation
+                    dp.DPxSetDoutValue(RGB2Trigger(black), 0xFFFFFF)
+                    dp.DPxUpdateRegCache()
+
+                    # Log the trigger to the results for later validation
+                    results.loc[trialIndex, 'trigger_value'] = combined_trigger_value
+
+                    # Debugging log to confirm reset
+                    print(f"Trigger for Trial {trialIndex} reset to black")
+
                 if frameN == 0:
                     clock.reset()
                     #port.setData(triggerList[wordIndex])
@@ -236,14 +330,23 @@ for trialIndex in range(startItem - 1, totalTrials):
     box.setAutoDraw(False)
 
     if isinstance(trialList[trialIndex]['taskQuestion'], str) and len(trialList[trialIndex]['taskQuestion']) >= 4:
-        event.clearEvents()
-        stim = visual.TextStim(win, text=trialList[trialIndex]['taskQuestion'], font=stimuliFont, units=taskQuestionUnits, height=taskQuestionSize, color=taskQuestionColor)
+        event.clearEvents()  # Clear previous events
+
+        # Show the current task question
+        stim = visual.TextStim(win, text=trialList[trialIndex]['taskQuestion'], font=instructionsFont,
+                               units=taskQuestionUnits, height=taskQuestionSize, color=taskQuestionColor)
         stim.setPos((0, 0))
         stim.draw()
         win.flip()
 
-        responses = event.waitKeys(keyList=[responseNo, responseYes, quitKey])
+        # Wait until a button press to proceed to next trial
+        response = None
+        while response is None:
+            response = getbutton()  # Listen for a button press
+            if response is not None:
+                responses.append(response)  # Add response to responses list
 
+        # Check for quit key or valid answer
         if responses[-1] == quitKey:
             participantName = participantInfo[0].replace(" ", "")
             filename = 'results.' + participantName + '.csv'
@@ -252,13 +355,14 @@ for trialIndex in range(startItem - 1, totalTrials):
             core.quit()
 
         if responses[-1] == trialList[trialIndex]['correctAnswer']:
-            #port.setData(correctTrigger)
             recentCorrectResponses += 1
             totalCorrectResponses += 1
             answer = 1
         else:
-            #port.setData(incorrectTrigger)
             answer = 0
+
+        # Wait a moment before continuing to the next trial
+        core.wait(0.5)  # Optional, or you can adjust this delay based on your experiment design
 
         for frameN in range(taskQuestionOff - 1):
             win.flip()
@@ -285,14 +389,17 @@ for trialIndex in range(startItem - 1, totalTrials):
         results.loc[trialIndex, 'answer'] = ''
 
     event.clearEvents()
-    stim = visual.TextStim(win, text='You can blink now.\n\nWhen you are ready for the next sentence, sit still, stop blinking, and press the YES key.', font=stimuliFont, units=breakUnits, height=breakSize, color=stimuliColor)
+    responses = []
+    stim = visual.TextStim(win, text='You can blink now.\n\nWhen you are ready for the next sentence, sit still, stop blinking, and press the YES key.', font=instructionsFont, units=breakUnits, height=breakSize, color=stimuliColor)
     stim.setPos((0, 0))
     stim.draw()
     win.flip()
 
-    pauseResponse = event.waitKeys(keyList=[responseYes, quitKey])
+    #pauseResponse = event.waitKeys(keyList=[responseYes, quitKey])
+    response = getbutton()  # listen to a button
+    responses.append(response)  # everytime we get a response we add it to the table
 
-    if pauseResponse[-1] == quitKey:
+    if responses[-1] == quitKey:
         participantName = participantInfo[0].replace(" ", "")
         filename = 'results.' + participantName + '.csv'
         results.to_csv(filename)
@@ -304,7 +411,7 @@ for trialIndex in range(startItem - 1, totalTrials):
     win.flip()
 
 event.clearEvents()
-stim = visual.TextStim(win, text='Congratulations, you are finished!\n\nYou read %i sentences, and answered %i out of %i questions correctly!\n\nThank you very much for your participation.\n\nPress any key to close this program.' % ((totalTrials - totalBreakCount - practiceCount), totalCorrectResponses, totalQuestionCount), font=stimuliFont, units=instructionUnits, height=instructionSize, color=instructionColor)
+stim = visual.TextStim(win, text='Congratulations, you are finished!\n\nYou read %i sentences, and answered %i out of %i questions correctly!\n\nThank you very much for your participation.\n\nPress any key to close this program.' % ((totalTrials - totalBreakCount - practiceCount), totalCorrectResponses, totalQuestionCount), font=instructionsFont, units=instructionUnits, height=instructionSize, color=instructionColor)
 stim.setPos((0, 0))
 stim.draw()
 win.flip()
@@ -317,3 +424,5 @@ results.to_csv(filename)
 
 win.close()
 core.quit()
+
+dp.DPxClose()
