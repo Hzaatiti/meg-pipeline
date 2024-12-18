@@ -52,4 +52,4 @@ if __name__ == "__main__":
 
     pipeline.get_raw_data('MEG_DATA/')
 
-    print("test")
+    print("Test successful")
