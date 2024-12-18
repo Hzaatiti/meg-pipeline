@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  #Remove this before merging the PR
+  pull_request:
 
 jobs:
   build-and-push:
