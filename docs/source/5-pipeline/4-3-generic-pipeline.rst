@@ -119,7 +119,34 @@ Fieldtrip specific pipelines
    4-3-a-fieldtrip-pipelines
 
 
+sLoreta, source reconstruction
+------------------------------
 
+Main paper by Pascual-Marqui, R. D. “Standardized Low-Resolution Brain Electromagnetic Tomography (sLORETA): Technical Details.” Methods and Findings in Experimental and Clinical Pharmacology 24 Suppl D (2002): 5–12.
+
+Hypothesis: brain activity occur from a finite number of distributed hotspots
+
+Let :math:`N_e` be the number of sensors, :math:`N_v` the number of voxels
+
+To each voxel :math:`l`, associate a 3D-dipole moment :math:`J_{l} = (J_x, J_y, J_z)`
+
+
+The underlying model suggest a linear relationship between the measurement provided by the sensors and the 3-D dipole moment, meaning:
+
+:math:`\Phi = K.J + c.1`
+
+Given the measurements :math:`\Phi` and a fitted :math:`K, c` then :math:`J` can be deduced
+
+The Laplacian
+
+
+Minimum norm estimation
+-----------------------
+
+Hypothesis: the best solution is the one where the current are minimal i.e. :math:`J` is minimal, suggesting that the brain is energy-efficient.
+
+
+Consequences: favors surface level solutions than in depth solutions, because depth solutions require higher amplitude currents
 
 Beamforming, source reconstruction
 ----------------------------------
