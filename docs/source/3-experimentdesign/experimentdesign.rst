@@ -111,7 +111,10 @@ Adapting your PsychoPy experiment to the NYUAD setup requires the following:
 - add code for sending triggers
 - add code for Vpixx accessories devices (response box, eyetracker and so on)
 
+- add code for importing the `utilities` functions found under `experiments/psychopy/general/utilities.py`
+    .. code:: python
 
+        from experiments.psychopy.general.utilities import *
 
 - Define in your code the following dictionaries respectively for the trigger channel numbers on the KIT system, the code that should be sent to Vpixx in order to trigger the corresponding channel, and the black RGB code (indicating no triggers active)
 
@@ -130,7 +133,7 @@ Adapting your PsychoPy experiment to the NYUAD setup requires the following:
 
         black = [0, 0, 0]
 
-- Add the Vpixx import at the beginning of your `.py` PsychoPy experiment
+- Add the Vpixx library import at the beginning of your `.py` PsychoPy experiment
 
     .. code:: python
 
@@ -160,17 +163,39 @@ Adapting your PsychoPy experiment to the NYUAD setup requires the following:
 
         USE_VPIXX = TRUE
 
+
+
 PsychoPy code for sending triggers
 ----------------------------------
 
 - Decide on how many trigger events are needed
     - If less than 8 event types, then you can use the 8 trigger channels of the KIT independently from one another
+        - In this case, to activate channel 224 for example add the following code everytime you want to trigger the channel
+
+        .. code:: python
+
+            dp.DPxSetDoutValue(trigger_channels_dictionary[224], 0xFFFFFF)
+            dp.DPxUpdateRegCache()
+
+        - The above code will keep the channel 224 on the high level, we will need to set it back to the low level after a small delay (typically 10 frames)
+
+        .. code:: python
+
+            dp.DPxSetDoutValue(RGB2Trigger(black), 0xFFFFFF)
+            dp.DPxUpdateRegCache()
+
     - If more than 8 event types are needed, then you can use each all 8 trigger channels in the combined binary mode
         - channels 224 to 231 will be interpreted as a binary code of zeros and ones with 224 being the most significant bit and 231 the least significant bit
         - In this case, design your trigger matrix containing for each stimulus, which 8 bit binary code shall be used to represent the type of the event
-        - In your experiment code, everytime you would like to display the stimulus and trigger the corresponding code
+        - In your experiment code, everytime you would like to display a stimulus and activate the corresponding trigger code, you will need to add the following lines
+
         .. code:: python
 
+            # Presuming your experiment import information about your trial from a .csv file then:
+            # trialList is a csv where each row correspond to a trial
+            # trialIndex is an index indicating the current number of the trial
+            # the value of trialList[trialIndex]['trigger224'] is either 0 or 1 and correspond to the bit of channel 224
+            # trigger_channels_dictionary is imported from the utilities and provides the channel-specific code
             combined_trigger_value = (
                 trialList[trialIndex]['trigger224'] * trigger_channels_dictionary[224] +
                 trialList[trialIndex]['trigger225'] * trigger_channels_dictionary[225] +
@@ -183,8 +208,9 @@ PsychoPy code for sending triggers
             )
             print(f"Trial {trialIndex}, Trigger: Combined Value = {combined_trigger_value}")
 
+            # Once the value is computed, then we can send it to Vpixx
 
             dp.DPxSetDoutValue(combined_trigger_value, 0xFFFFFF)
             dp.DPxUpdateRegCache()
-            print('wordIndex', wordIndex)
-            print('frameN', frameN)
+
+

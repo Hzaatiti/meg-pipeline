@@ -19,6 +19,8 @@ psychopy.useVersion('2024.2.4')
 from psychopy import locale_setup
 from psychopy import prefs
 from psychopy import plugins
+from experiments.psychopy.general.utilities import *
+
 
 plugins.activatePlugins()
 prefs.hardware['audioLib'] = 'ptb'
