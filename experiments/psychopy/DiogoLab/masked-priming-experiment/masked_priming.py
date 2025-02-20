@@ -20,7 +20,7 @@ from psychopy import locale_setup
 from psychopy import prefs
 from psychopy import plugins
 from experiments.psychopy.general.utilities import *
-
+from pypixxlib import _libdpx as dp
 
 plugins.activatePlugins()
 prefs.hardware['audioLib'] = 'ptb'
@@ -38,6 +38,17 @@ import os  # handy system and path functions
 import sys  # to get file system encoding
 
 from psychopy.hardware import keyboard
+
+
+
+USE_VPIXX = False
+
+if USE_VPIXX:
+    dp.DPxOpen()
+    dp.DPxDisableDoutPixelMode()
+    dp.DPxWriteRegCache()
+    dp.DPxSetDoutValue(RGB2Trigger(black), 0xFFFFFF)
+    dp.DPxUpdateRegCache()
 
 # --- Setup global variables (available in all functions) ---
 # create a device manager to handle hardware (keyboards, mice, mirophones, speakers, etc.)
@@ -2162,3 +2173,7 @@ if __name__ == '__main__':
     )
     saveData(thisExp=thisExp)
     quit(thisExp=thisExp, win=win)
+
+
+    if USE_VPIXX:
+        dp.DPxClose()

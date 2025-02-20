@@ -12,6 +12,8 @@ trigger_channels_dictionary = {
     231: 65536
 }
 
+black = [0, 0, 0]
+
 def RGB2Trigger(color):
     # helper function determines expected trigger from a given RGB 255 colour value
     # operates by converting individual colours into binary strings and stitching them together

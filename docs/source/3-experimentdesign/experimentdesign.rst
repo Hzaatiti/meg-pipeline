@@ -116,23 +116,6 @@ Adapting your PsychoPy experiment to the NYUAD setup requires the following:
 
         from experiments.psychopy.general.utilities import *
 
-- Define in your code the following dictionaries respectively for the trigger channel numbers on the KIT system, the code that should be sent to Vpixx in order to trigger the corresponding channel, and the black RGB code (indicating no triggers active)
-
-    .. code:: python
-
-        channel_names  = ['224', '225', '226', '227', '228', '229', '230', '231']
-
-        trigger = [ [4, 0, 0],
-                    [16, 0, 0],
-                    [64, 0, 0],
-                    [0, 1, 0],
-                    [0, 4, 0],
-                    [0, 16, 0],
-                    [0, 64, 0],
-                    [0, 0, 1]]
-
-        black = [0, 0, 0]
-
 - Add the Vpixx library import at the beginning of your `.py` PsychoPy experiment
 
     .. code:: python
@@ -213,4 +196,14 @@ PsychoPy code for sending triggers
             dp.DPxSetDoutValue(combined_trigger_value, 0xFFFFFF)
             dp.DPxUpdateRegCache()
 
+        - The above code will keep the combination of selected channels on the high level, we will need to set it back to the low level (00000000) after a small delay (typically 10 frames)
+            - Make an if/else test for the proper frame to stop the trigger activation
+
+            .. code:: python
+
+                dp.DPxSetDoutValue(RGB2Trigger(black), 0xFFFFFF)
+                dp.DPxUpdateRegCache()
+
+Psychopy Code for response boxes
+--------------------------------
 
