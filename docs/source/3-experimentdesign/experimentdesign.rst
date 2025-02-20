@@ -98,3 +98,93 @@ KIT system testing triggers
 
 If you are in the testing phase of your experiment and would like to test the triggers, you can do so without locking the sensors.
 Simply open `MEG160` and then `Acquire -> MEG Measurement`, then run your experiment from the stimulus computer and observe channels 224 -> 231 to check for trigger signals.
+
+
+
+
+
+
+PsychoPy experiment
+-------------------
+
+Adapting your PsychoPy experiment to the NYUAD setup requires the following:
+- add code for sending triggers
+- add code for Vpixx accessories devices (response box, eyetracker and so on)
+
+
+
+- Define in your code the following dictionaries respectively for the trigger channel numbers on the KIT system, the code that should be sent to Vpixx in order to trigger the corresponding channel, and the black RGB code (indicating no triggers active)
+
+    .. code:: python
+
+        channel_names  = ['224', '225', '226', '227', '228', '229', '230', '231']
+
+        trigger = [ [4, 0, 0],
+                    [16, 0, 0],
+                    [64, 0, 0],
+                    [0, 1, 0],
+                    [0, 4, 0],
+                    [0, 16, 0],
+                    [0, 64, 0],
+                    [0, 0, 1]]
+
+        black = [0, 0, 0]
+
+- Add the Vpixx import at the beginning of your `.py` PsychoPy experiment
+
+    .. code:: python
+
+        from pypixxlib import _libdpx as dp
+
+- At the beginning of your script add the code to establish the connection with Vpixx devices and disable PixelMode in case it was already active
+
+    .. code:: python
+
+        dp.DPxOpen()
+        dp.DPxDisableDoutPixelMode()
+        dp.DPxWriteRegCache()
+        dp.DPxSetDoutValue(RGB2Trigger(black), 0xFFFFFF)
+        dp.DPxUpdateRegCache()
+
+
+- At the end of your code add the code to disable the connection with Vpixx
+
+    .. code:: python
+
+        dp.DPxClose()
+
+- Ideally, you would want to add a boolean flag `USE_VPIXX` that enables or not the connection and enclose the above code with the boolean condition
+    - This will allow you to keep testing your experiment on your local computer that doesn't have Vpixx devices so that it doesn't crash from the Vpixx specific code
+
+    .. code:: python
+
+        USE_VPIXX = TRUE
+
+PsychoPy code for sending triggers
+----------------------------------
+
+- Decide on how many trigger events are needed
+    - If less than 8 event types, then you can use the 8 trigger channels of the KIT independently from one another
+    - If more than 8 event types are needed, then you can use each all 8 trigger channels in the combined binary mode
+        - channels 224 to 231 will be interpreted as a binary code of zeros and ones with 224 being the most significant bit and 231 the least significant bit
+        - In this case, design your trigger matrix containing for each stimulus, which 8 bit binary code shall be used to represent the type of the event
+        - In your experiment code, everytime you would like to display the stimulus and trigger the corresponding code
+        .. code:: python
+
+            combined_trigger_value = (
+                trialList[trialIndex]['trigger224'] * trigger_channels_dictionary[224] +
+                trialList[trialIndex]['trigger225'] * trigger_channels_dictionary[225] +
+                trialList[trialIndex]['trigger226'] * trigger_channels_dictionary[226] +
+                trialList[trialIndex]['trigger227'] * trigger_channels_dictionary[227] +
+                trialList[trialIndex]['trigger228'] * trigger_channels_dictionary[228] +
+                trialList[trialIndex]['trigger229'] * trigger_channels_dictionary[229] +
+                trialList[trialIndex]['trigger230'] * trigger_channels_dictionary[230] +
+                trialList[trialIndex]['trigger231'] * trigger_channels_dictionary[231]
+            )
+            print(f"Trial {trialIndex}, Trigger: Combined Value = {combined_trigger_value}")
+
+
+            dp.DPxSetDoutValue(combined_trigger_value, 0xFFFFFF)
+            dp.DPxUpdateRegCache()
+            print('wordIndex', wordIndex)
+            print('frameN', frameN)
