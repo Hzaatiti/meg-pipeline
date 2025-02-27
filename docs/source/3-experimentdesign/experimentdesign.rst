@@ -98,3 +98,112 @@ KIT system testing triggers
 
 If you are in the testing phase of your experiment and would like to test the triggers, you can do so without locking the sensors.
 Simply open `MEG160` and then `Acquire -> MEG Measurement`, then run your experiment from the stimulus computer and observe channels 224 -> 231 to check for trigger signals.
+
+
+
+
+
+
+PsychoPy experiment
+-------------------
+
+Adapting your PsychoPy experiment to the NYUAD setup requires the following:
+- add code for sending triggers
+- add code for Vpixx accessories devices (response box, eyetracker and so on)
+
+- add code for importing the `utilities` functions found under `experiments/psychopy/general/utilities.py`
+    .. code:: python
+
+        from experiments.psychopy.general.utilities import *
+
+- Add the Vpixx library import at the beginning of your `.py` PsychoPy experiment
+
+    .. code:: python
+
+        from pypixxlib import _libdpx as dp
+
+- At the beginning of your script add the code to establish the connection with Vpixx devices and disable PixelMode in case it was already active
+
+    .. code:: python
+
+        dp.DPxOpen()
+        dp.DPxDisableDoutPixelMode()
+        dp.DPxWriteRegCache()
+        dp.DPxSetDoutValue(RGB2Trigger(black), 0xFFFFFF)
+        dp.DPxUpdateRegCache()
+
+
+- At the end of your code add the code to disable the connection with Vpixx
+
+    .. code:: python
+
+        dp.DPxClose()
+
+- Ideally, you would want to add a boolean flag `USE_VPIXX` that enables or not the connection and enclose the above code with the boolean condition
+    - This will allow you to keep testing your experiment on your local computer that doesn't have Vpixx devices so that it doesn't crash from the Vpixx specific code
+
+    .. code:: python
+
+        USE_VPIXX = TRUE
+
+
+
+PsychoPy code for sending triggers
+----------------------------------
+
+- Decide on how many trigger events are needed
+    - If less than 8 event types, then you can use the 8 trigger channels of the KIT independently from one another
+        - In this case, to activate channel 224 for example add the following code everytime you want to trigger the channel
+
+        .. code:: python
+
+            dp.DPxSetDoutValue(trigger_channels_dictionary[224], 0xFFFFFF)
+            dp.DPxUpdateRegCache()
+
+        - The above code will keep the channel 224 on the high level, we will need to set it back to the low level after a small delay (typically 10 frames)
+
+        .. code:: python
+
+            dp.DPxSetDoutValue(RGB2Trigger(black), 0xFFFFFF)
+            dp.DPxUpdateRegCache()
+
+    - If more than 8 event types are needed, then you can use each all 8 trigger channels in the combined binary mode
+        - channels 224 to 231 will be interpreted as a binary code of zeros and ones with 224 being the most significant bit and 231 the least significant bit
+        - In this case, design your trigger matrix containing for each stimulus, which 8 bit binary code shall be used to represent the type of the event
+        - In your experiment code, everytime you would like to display a stimulus and activate the corresponding trigger code, you will need to add the following lines
+
+        .. code:: python
+
+            # Presuming your experiment import information about your trial from a .csv file then:
+            # trialList is a csv where each row correspond to a trial
+            # trialIndex is an index indicating the current number of the trial
+            # the value of trialList[trialIndex]['trigger224'] is either 0 or 1 and correspond to the bit of channel 224
+            # trigger_channels_dictionary is imported from the utilities and provides the channel-specific code
+            combined_trigger_value = (
+                trialList[trialIndex]['trigger224'] * trigger_channels_dictionary[224] +
+                trialList[trialIndex]['trigger225'] * trigger_channels_dictionary[225] +
+                trialList[trialIndex]['trigger226'] * trigger_channels_dictionary[226] +
+                trialList[trialIndex]['trigger227'] * trigger_channels_dictionary[227] +
+                trialList[trialIndex]['trigger228'] * trigger_channels_dictionary[228] +
+                trialList[trialIndex]['trigger229'] * trigger_channels_dictionary[229] +
+                trialList[trialIndex]['trigger230'] * trigger_channels_dictionary[230] +
+                trialList[trialIndex]['trigger231'] * trigger_channels_dictionary[231]
+            )
+            print(f"Trial {trialIndex}, Trigger: Combined Value = {combined_trigger_value}")
+
+            # Once the value is computed, then we can send it to Vpixx
+
+            dp.DPxSetDoutValue(combined_trigger_value, 0xFFFFFF)
+            dp.DPxUpdateRegCache()
+
+        - The above code will keep the combination of selected channels on the high level, we will need to set it back to the low level (00000000) after a small delay (typically 10 frames)
+            - Make an if/else test for the proper frame to stop the trigger activation
+
+            .. code:: python
+
+                dp.DPxSetDoutValue(RGB2Trigger(black), 0xFFFFFF)
+                dp.DPxUpdateRegCache()
+
+Psychopy Code for response boxes
+--------------------------------
+

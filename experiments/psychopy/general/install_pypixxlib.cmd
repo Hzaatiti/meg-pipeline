@@ -1,0 +1,1 @@
+pip3 C:\Program Files\VPixx Technologies\Software Tools\pypixxlib

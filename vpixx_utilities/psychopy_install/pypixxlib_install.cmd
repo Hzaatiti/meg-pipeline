@@ -1,0 +1,1 @@
+"C:\Program Files\PsychoPy\python.exe" -m pip install "C:\Program Files\VPixx Technologies\Software Tools\pypixxlib\pypixxlib-1.9.2.tar.gz"
